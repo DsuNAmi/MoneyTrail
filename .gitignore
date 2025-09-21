@@ -1,0 +1,20 @@
+# complier files
+*.out
+*.o
+*.dyliib
+*.a
+
+# build dirs
+build/
+bin/
+.DS_Store
+
+# Vscode
+.vscode/
+*.code-workspace
+
+# logs
+*.log
+
+# database
+.db

@@ -1,0 +1,18 @@
+{
+    "0" : {
+        "config_name" : "server",
+        "path" : "",
+        "config_content" : {
+            "host" : "localhost",
+            "port" : 8080
+        } 
+    },
+    "1" : {
+        "config_name" : "logger",
+        "path" : "../logs/output.log"
+    },
+    "2" : {
+        "config_name" : "database",
+        "path" : "../database/mt.db"
+    }
+}

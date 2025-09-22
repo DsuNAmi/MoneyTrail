@@ -33,5 +33,5 @@ void Config::load_file(){
 }
 
 nlohmann::json Config::get_object(CType config_type) const{
-    return configs[static_cast<int>(config_type)];
+    return configs[std::to_string(static_cast<int>(config_type))];
 }

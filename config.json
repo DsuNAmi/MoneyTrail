@@ -4,7 +4,8 @@
         "path" : "",
         "config_content" : {
             "host" : "localhost",
-            "port" : 8080
+            "port" : 8080,
+            "thread_number" : 1
         } 
     },
     "1" : {
@@ -14,5 +15,14 @@
     "2" : {
         "config_name" : "database",
         "path" : "../database/mt.db"
+    },
+    "3" : {
+        "config_name" : "threadpool",
+        "path" : "",
+        "config_content" : {
+            "thread_number" : 10,
+            "add_chunk" : 20,
+            "max_number" : 200
+        }
     }
 }

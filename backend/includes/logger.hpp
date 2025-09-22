@@ -29,11 +29,12 @@ class Logger{
         // force to const char * and std::string
         explicit Logger() = default;
         Logger(std::string log_file_path);
-        virtual ~Logger() = default;
+        virtual ~Logger();
 
 
         Logger(const Logger &) = delete;
         Logger & operator=(const Logger &) = delete;
+
 
         template<loggerable LOG>
         void log_cout(LogLevel ll, LOG message){
@@ -55,8 +56,7 @@ class Logger{
     private:
         template<loggerable LOG>
         void log(std::ostream & os, LogLevel ll,  LOG messages){
-            os << 
-            std::format("\{{}\}-[{}]::{}", log_to_string(ll), cur_time(),messages) <<
+            os << "{" + log_to_string(ll) + "}-[" + cur_time() + "]::" << messages <<
             std::endl;
         }
 
@@ -91,9 +91,4 @@ class Logger{
 
 
 // helper
-void cerr_h_time(const char * em){
-    std::time_t time(std::time(nullptr));
-    char buff[32];
-    std::strftime(buff, sizeof(buff), "%Y-%m-%d %H:%M:%S", std::localtime(&time));
-    std::cerr << "[" << buff << "]" << em << std::endl;
-}
+void cerr_h_time(const char * em);

@@ -11,7 +11,8 @@
 enum class CType{
     SERVER = 0,
     LOGGER,
-    DATABASE
+    DATABASE,
+    THREADPOOL
     /* ... */
 };
 

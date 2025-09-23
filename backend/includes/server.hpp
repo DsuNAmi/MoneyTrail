@@ -7,7 +7,8 @@
 #include <thread>
 #include <functional>
 #include <mutex>
-
+#include <sstream>
+#include <fstream>
 
 #include <boost/asio.hpp>
 
@@ -94,3 +95,9 @@ class Server{
         
 
 };
+
+
+//helper
+std::string read_file_to_string(const std::string & path);
+
+std::string get_mine_type(const std::string & file_path);

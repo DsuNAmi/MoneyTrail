@@ -100,4 +100,4 @@ class Server{
 //helper
 std::string read_file_to_string(const std::string & path);
 
-std::string get_mine_type(const std::string & file_path);
+std::string get_mime_type(const std::string & file_path);

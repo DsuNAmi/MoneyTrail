@@ -19,10 +19,14 @@ std::string get_mime_type(const std::string & file_path){
     if(file_path.ends_with(".json")) return "application/json";
     if(file_path.ends_with(".png")) return "image/png";
     if(file_path.ends_with(".jpg") || file_path.ends_with(".jpeg")) return "image/jpeg";
-    //... more
-
+    if(file_path.ends_with(".svg")) return "image/svg+xml";
+    if(file_path.ends_with(".ico")) return "image/x-icon";
+    if(file_path.ends_with(".woff")) return "font/woff";
+    if(file_path.ends_with(".woff2")) return "font/woff2";
+    if(file_path.ends_with(".ttf")) return "font/ttf";
     return "text/plain";
 }
+
 
 // Session 
 Session::Session(boost::asio::ip::tcp::socket socket, Logger & logger, Server & server)
@@ -74,52 +78,61 @@ void Session::handle_request(const std::string & request){
     
     std::string body;
     std::string response;
-    std::string content_type;
+    std::string content_type = "text/plain";
 
-    if(method != "GET"){
-        body = "405 Method Not Allowed";
-        content_type = "text/plain";
+    if(method == "OPTIONS"){
         response = 
-            "HTTP/1.1 405 Method Not Allowed\r\n"
-            "Content-Length: " + std::to_string(body.size()) + "\r\n"
-            "Content-Type: " + content_type + "\r\n"
-            "Connection: keep-alive\r\n"
-            "\r\n" + body;
+            "HTTP/1.1 204 No Content\r\n"
+            "Content-Length: 0\r\n"
+            "Access-Control-Allow-Origin: *\r\n"
+            "Access-Control-Allow-Methods: POST, OPTIONS\r\n"
+            "Access-Control-Allow-Headers: Content-Type\r\n"
+            "\r\n";
         do_write(response);
         return;
     }
 
+    if(method == "POST"){
+        if(target == "/plan"){
+            //test data
+            //nlohmann::json get_data()
+            nlohmann::json json_response = nlohmann::json::array();
+            json_response.push_back({{"name", "故宫"}, {"cost", 100}, {"time", "3小时"}});
+            json_response.push_back({{"name", "天安门广场"}, {"cost", 0}, {"time", "1小时"}});
+            json_response.push_back({{"name", "颐和园"}, {"cost", 50}, {"time", "2小时"}});
+
+            body = json_response.dump();
+            content_type = "application/json";
+
+            response = 
+                "HTTP/1.1 200 OK\r\n"
+                "Content-Length: " + std::to_string(body.size()) + "\r\n"
+                "Content-Type: " + content_type + "\r\n"
+                "Connection: keep-alive\r\n"
+                "Access-Control-Allow-Origin: *\r\n"
+                "Access-Control-Allow-Methods: POST, OPTIONS\r\n"
+                "Access-Control-Allow-Headers: Content-Type\r\n"
+                "\r\n" + body;
+            
+            do_write(response);
+            return;
+        }
 
 
-    if(target == "/"){
-        // Example: serve a simple HTML page
-        body = read_file_to_string("../dist/index.html");
-        content_type = "text/html";
-    }else if(target == "/cpp"){
-        nlohmann::json data;
-        data["message"] = "Hello from C++ backend!";
-        body = data.dump();
-        content_type = "application/json";
-    }else{
-        std::string file_path = "../dist" + target;
-        body = read_file_to_string(file_path);
-        content_type = get_mime_type(file_path);
     }
 
-    if(body.empty() && target != "/"){
-        std::string not_found_body = "404 Not Found";
-        response = 
-            "HTTP/1.1 404 Not Found\r\n"
-            "Content-Length: " + std::to_string(not_found_body.size()) + "\r\n"
-            "Content-Type: text/plain\r\n"
-            "Connection: keep-alive\r\n\r\n" + not_found_body; 
-    }else{
-        response = 
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Length: " + std::to_string(body.size()) + "\r\n"
-            "Content-Type: " + content_type + "\r\n"
-            "Connection: keep-alive\r\n\r\n" + body;
-    }
+
+    //others
+    body = "404 Not Found";
+    response = 
+        "HTTP/1.1 400 Not Found\r\n"
+        "Content-Length: " + std::to_string(body.size()) + "\r\n"
+        "Content-Type: " + content_type + "\r\n"
+        "Connection: keep-alive\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "Access-Control-Allow-Methods: POST, OPTIONS\r\n"
+        "Access-Control-Allow-Headers: Content-Type\r\n"
+        "\r\n" + body;
 
     do_write(response);
 }

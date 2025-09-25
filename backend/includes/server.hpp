@@ -11,7 +11,7 @@
 #include <fstream>
 
 #include <boost/asio.hpp>
-
+#include <boost/beast.hpp>
 
 #include "logger.hpp"
 
@@ -29,12 +29,13 @@ class Session : public std::enable_shared_from_this<Session> {
     private:
 
         void do_read();
-        void handle_request(const std::string & request);
-        void do_write(const std::string & response);
+        void handle_request(std::shared_ptr<boost::beast::http::request<boost::beast::http::string_body>> request,
+                            std::shared_ptr<boost::beast::flat_buffer> buffer);
+        void do_write(boost::beast::http::response<boost::beast::http::string_body>  response);
+        void handle_disconnection(boost::beast::error_code ec);
 
     private: 
         boost::asio::ip::tcp::socket _socket;
-        boost::asio::streambuf _buffer;
 
         std::string _client_name;
 

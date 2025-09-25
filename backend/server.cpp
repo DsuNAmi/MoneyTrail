@@ -44,113 +44,113 @@ Session::Session(boost::asio::ip::tcp::socket socket, Logger & logger, Server & 
 void Session::start(){
     _server.add_session(_client_name, shared_from_this());
     do_read();
+    _logger.log_file(LogLevel::ERROR, "start");
 }
 
 void Session::do_read(){
     auto self(shared_from_this());
-    boost::asio::async_read_until(_socket, _buffer, "\r\n\r\n",
-        [this, self](boost::system::error_code ec, std::size_t bytes){
-            if(!ec){
-                std::istream request_stream(&_buffer);
-                std::string request;
-                std::getline(request_stream, request, '\0');
-                _logger.log_file(LogLevel::INFO, "Received request from " + _client_name + ": \n" + request);
-                handle_request(request);
-            }else{
-                if (ec == boost::asio::error::eof || ec == boost::asio::error::connection_reset) {
-                    // Client disconnected normally, do not treat as error
-                    _logger.log_file(LogLevel::INFO, "Connection with " + _client_name + " closed by client.");
-                } else {
-                    _logger.log_file(LogLevel::ERROR, "Read error from " + _client_name + ": " + ec.message());
-                }
-                _server.remove_closed_sessions(_client_name);
+    auto buffer = std::make_shared<boost::beast::flat_buffer>();
+    auto request = std::make_shared<boost::beast::http::request<boost::beast::http::string_body>>();
+
+    boost::beast::http::async_read(_socket, *buffer, *request,
+        [this, self, buffer, request](boost::beast::error_code ec, std::size_t bytes){
+            if(ec){
+                handle_disconnection(ec);
+                return;
             }
+
+            _logger.log_file(LogLevel::ERROR, "do_read");
+            handle_request(request,buffer);
         });
 }
 
-void Session::handle_request(const std::string & request){
-    std::string method, target, version;
-    std::istringstream iss(request);
-    iss >> method >> target >> version;
-
-    cerr_h_time(std::string("Request: " + method + " " + target + " " + version).c_str());
-
+void Session::handle_request(std::shared_ptr<boost::beast::http::request<boost::beast::http::string_body>> request,
+                             std::shared_ptr<boost::beast::flat_buffer> buffer){
+    boost::beast::http::response<boost::beast::http::string_body> response;
+    response.version(request->version());
+    response.keep_alive(request->keep_alive());
+    response.set(boost::beast::http::field::server,"MoneyTrail");
+    response.set(boost::beast::http::field::access_control_allow_origin,"*");
+    response.set(boost::beast::http::field::access_control_allow_methods,"POST, OPTIONS");
+    response.set(boost::beast::http::field::access_control_allow_headers,"Content-Type");
     
-    std::string body;
-    std::string response;
-    std::string content_type = "text/plain";
+    _logger.log_file(LogLevel::ERROR, "load_data");
 
-    if(method == "OPTIONS"){
-        response = 
-            "HTTP/1.1 204 No Content\r\n"
-            "Content-Length: 0\r\n"
-            "Access-Control-Allow-Origin: *\r\n"
-            "Access-Control-Allow-Methods: POST, OPTIONS\r\n"
-            "Access-Control-Allow-Headers: Content-Type\r\n"
-            "\r\n";
-        do_write(response);
-        return;
-    }
 
-    if(method == "POST"){
-        if(target == "/plan"){
-            //test data
-            //nlohmann::json get_data()
-            nlohmann::json json_response = nlohmann::json::array();
-            json_response.push_back({{"name", "故宫"}, {"cost", 100}, {"time", "3小时"}});
-            json_response.push_back({{"name", "天安门广场"}, {"cost", 0}, {"time", "1小时"}});
-            json_response.push_back({{"name", "颐和园"}, {"cost", 50}, {"time", "2小时"}});
-
-            body = json_response.dump();
-            content_type = "application/json";
-
-            response = 
-                "HTTP/1.1 200 OK\r\n"
-                "Content-Length: " + std::to_string(body.size()) + "\r\n"
-                "Content-Type: " + content_type + "\r\n"
-                "Connection: keep-alive\r\n"
-                "Access-Control-Allow-Origin: *\r\n"
-                "Access-Control-Allow-Methods: POST, OPTIONS\r\n"
-                "Access-Control-Allow-Headers: Content-Type\r\n"
-                "\r\n" + body;
-            
-            do_write(response);
-            return;
+    try
+    {
+        if(request->method() == boost::beast::http::verb::options){
+            response.result(boost::beast::http::status::no_content);
+            response.body() = "";
+        }else if(request->method() == boost::beast::http::verb::post && request->target() == "/plan"){
+            nlohmann::json json_response;
+            try
+            {
+                if(!request->body().empty()){
+                    auto parsed = nlohmann::json::parse(request->body());
+                    (void)parsed;
+                    //continue;
+                }
+                json_response = nlohmann::json::array({
+                    {{"name","故宫"},{"cost",100},{"time","3小时"}},
+                    {{"name","天安门广场"},{"cost",0},{"time","1小时"}},
+                    {{"name","颐和园"},{"cost",50},{"time","2小时"}}
+                });
+            }
+            catch(...)
+            {
+                json_response = nlohmann::json::array({{{"name","null"},{"cost",0},{"time","null"}}});
+            }
+            response.result(boost::beast::http::status::ok);
+            response.set(boost::beast::http::field::content_type,"application/json");
+            response.body() = json_response.dump();
+        }else{
+            response.result(boost::beast::http::status::not_found);
+            response.set(boost::beast::http::field::content_type,"text/plain");
+            response.body() = "404 Not Found";
         }
-
-
+    }
+    catch(const std::exception& e)
+    {
+        response.result(boost::beast::http::status::internal_server_error);
+        response.body() = std::string("Server error: ") + e.what();
+        response.set(boost::beast::http::field::content_type,"text/plain");
     }
 
 
-    //others
-    body = "404 Not Found";
-    response = 
-        "HTTP/1.1 400 Not Found\r\n"
-        "Content-Length: " + std::to_string(body.size()) + "\r\n"
-        "Content-Type: " + content_type + "\r\n"
-        "Connection: keep-alive\r\n"
-        "Access-Control-Allow-Origin: *\r\n"
-        "Access-Control-Allow-Methods: POST, OPTIONS\r\n"
-        "Access-Control-Allow-Headers: Content-Type\r\n"
-        "\r\n" + body;
+    _logger.log_file(LogLevel::ERROR, "return data");
 
+
+
+
+    response.prepare_payload();
     do_write(response);
 }
 
-void Session::do_write(const std::string & response){
-    auto self(shared_from_this());
-    boost::asio::async_write(_socket, boost::asio::buffer(response),
-        [this, self](boost::system::error_code ec, std::size_t bytes){
+void Session::do_write(boost::beast::http::response<boost::beast::http::string_body> response){
+    auto self = shared_from_this();
+    boost::beast::http::async_write(_socket, response,
+        [this, self](boost::beast::error_code ec, std::size_t bytes){
             if(!ec){
-                // Continue reading for more requests (keep-alive)
+                _logger.log_file(LogLevel::ERROR, "do_write");
                 do_read();
-            }else{
-                _socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
-                _server.remove_closed_sessions(_client_name);
-                _logger.log_file(LogLevel::INFO, "Connection with " + _client_name + " closed.");
+            }
+            else{
+                handle_disconnection(ec);
             }
         });
 }
+
+
+ void Session::handle_disconnection(boost::beast::error_code ec){
+            if (ec == boost::asio::error::eof || ec == boost::asio::error::connection_reset) {
+                // Client disconnected normally, do not treat as error
+                _logger.log_file(LogLevel::INFO, "Connection with " + _client_name + " closed by client.");
+            } else {
+                _logger.log_file(LogLevel::ERROR, "Read error from " + _client_name + ": " + ec.message());
+            }
+            _server.remove_closed_sessions(_client_name);
+        }
 
 // Server
 Server::Server(std::string host, unsigned short port, int thread_number, Logger & logger)

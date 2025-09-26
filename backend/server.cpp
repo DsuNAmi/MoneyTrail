@@ -237,14 +237,11 @@ void Server::stop(){
     }
     
     close_all_clients();
-    _logger.log_file(LogLevel::WARNING, "DEBUG, ready to close ioc.");
 
 
     //finally to stop server
     if(!_ioc.stopped()){
-        _logger.log_file(LogLevel::WARNING, "DEBUG, ioc is stopping.");
         _ioc.stop();
-        _logger.log_file(LogLevel::WARNING, "DEBUG, ioc has already stopped.");
     }
 
     _logger.log_file(LogLevel::INFO, "Server stopped successfully.");
@@ -267,7 +264,6 @@ void Server::close_all_clients(){
 
     for(auto & [client_name, session] : _clients){
         if(session){
-            _logger.log_file(LogLevel::WARNING, "DEBUG," + client_name + " is stopping.");
             session.reset();
         }
     }

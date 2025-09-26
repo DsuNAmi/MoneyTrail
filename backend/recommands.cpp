@@ -1,38 +1,70 @@
 #include "includes/recommands.hpp"
 
 
+
+//helper
+std::string jet_to_string(JsonErrorType jet){
+    if(jet == JsonErrorType::SUCCESS){
+        return "";
+    }
+    switch (jet)
+    {
+        case JsonErrorType::INVALID : return "DATA INVAILD";
+        case JsonErrorType::NOTFIT : return "DATA NOTFIT";
+        default: return "OTHER";
+    }
+}
+
 namespace Recommands{
-    json recommand_travel_tour(const json & parsed_json, Logger & logger){
-        //1. read the data
-        std::string destination = parsed_json.value("location","");
-        int travel_days = parsed_json.value("days", 0);
-        float travel_budgets = parsed_json.value("budget",0.0);
-        
-        
-        //2. check the data
-        if(!is_vaild_input(destination, travel_days, travel_budgets)){
-            logger.log_file(LogLevel::WARNING, "Parsed Data is non-valid.");
-            return json::array(); // return null
+
+
+
+    //Recommander;
+    Recommander::Recommander(const json & send_json, Logger & logger)
+    : _logger(logger)
+    {
+        logger.log_file(LogLevel::INFO, "Parse Send Json....");
+        parsed(send_json);
+        JsonErrorType jet = check_data();
+        if(JsonErrorType::SUCCESS == jet){
+            logger.log_file(LogLevel::INFO, "Parsed Json Successfully.");
+        }else{
+            throw std::invalid_argument(jet_to_string(jet));
         }
-
-        //
-
-        
-
     }
 
-    bool is_vaild_input(const std::string & d, int td, float tb){
-        //1. input is non-valid
-        if(d.empty() || 0 == td || 0.0 == tb){
-            return false;
-        }
 
-        //constaint
-        if(d.size() > 50 || 0 > td || 0.0 > tb){
-            return false;
+    void Recommander::parsed(const json & parsed_json){
+        try
+        {
+            _destination = parsed_json.value("destination", "");
+            _travel_days = parsed_json.value("days", 0);
+            _travel_budgets = parsed_json.value("budgets",0.0);
         }
-
-        //...
+        catch(const std::exception& e)
+        {
+            _logger.log_file(LogLevel::ERROR, "Parsed Failed: " + std::string(e.what()));
+            return;
+        }
+        
     }
-    
+
+
+    JsonErrorType Recommander::check_data(){
+        if(_destination.empty() || 0 == _travel_days || 0.0 == _travel_budgets){
+            _logger.log_file(LogLevel::WARNING, "Parsed Failed.");
+            return JsonErrorType::INVALID;
+        }
+
+
+        if(_destination.size() > 50 || 0 < _travel_days || 0.0 > _travel_budgets){
+            _logger.log_file(LogLevel::WARNING, "Data is not fit.");
+            return JsonErrorType::NOTFIT;
+        }
+
+        //....
+
+
+        return JsonErrorType::SUCCESS;
+    }
 }

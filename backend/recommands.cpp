@@ -17,8 +17,6 @@ std::string jet_to_string(JsonErrorType jet){
 
 namespace Recommands{
 
-
-
     //Recommander;
     Recommander::Recommander(const json & send_json, Logger & logger)
     : _logger(logger)
@@ -66,5 +64,11 @@ namespace Recommands{
 
 
         return JsonErrorType::SUCCESS;
+    }
+
+
+    json Recommander::recommand_algorithm(){
+        json res_json;
+        
     }
 }

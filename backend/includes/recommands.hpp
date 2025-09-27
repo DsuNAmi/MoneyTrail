@@ -2,6 +2,10 @@
 
 #include <nlohmann/json.hpp>
 #include <exception>
+#include <boost/asio.hpp>
+#include <boost/beast.hpp>
+
+
 
 #include "logger.hpp"
 

@@ -1,0 +1,38 @@
+[
+
+    {
+      "city": "天津",
+      "attractions": [
+        {"name": "意风区", "price": 0, "duration": 2, "type": "人文"},
+        {"name": "古文化街", "price": 20, "duration": 2, "type": "人文"},
+        {"name": "天津之眼摩天轮", "price": 120, "duration": 1, "type": "娱乐"},
+        {"name": "五大道", "price": 0, "duration": 3, "type": "人文"},
+        {"name": "天津博物馆", "price": 0, "duration": 2, "type": "人文"}
+      ],
+      "hotels": [
+        {"name": "如家快捷酒店", "price_per_night": 200},
+        {"name": "汉庭酒店", "price_per_night": 180}
+      ],
+      "restaurants": [
+        {"name": "狗不理包子", "avg_price": 50},
+        {"name": "耳朵眼炸糕", "avg_price": 30},
+        {"name": "桂发祥糕点", "avg_price": 40}
+      ],
+      "transport": [
+        {"from": "意风区", "to": "古文化街", "time_min": 15, "price": 5},
+        {"from": "古文化街", "to": "天津之眼摩天轮", "time_min": 20, "price": 6},
+        {"from": "天津之眼摩天轮", "to": "五大道", "time_min": 25, "price": 7},
+        {"from": "五大道", "to": "天津博物馆", "time_min": 15, "price": 5}
+      ]
+    },
+
+    {
+        "city" : "somewhere",
+        "attractions": [
+
+        ],
+        "hotels": [
+
+        ]
+    }
+]

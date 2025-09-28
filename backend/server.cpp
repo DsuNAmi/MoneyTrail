@@ -106,11 +106,14 @@ void Session::handle_request(net_string && request){
                 if(!request.body().empty()){
                     auto parsed = nlohmann::json::parse(request.body());
                     _logger.log_file(LogLevel::INFO,"Parsed : " + parsed.dump() +  "Form Json has been parsed.");
-                    json_res = nlohmann::json::array({
-                        {{"name","故宫"},{"cost",100},{"time","3小时"}},
-                        {{"name","天安门广场"},{"cost",0},{"time","1小时"}},
-                        {{"name","颐和园"},{"cost",50},{"time","2小时"}}
-                    });
+                    // json_res = nlohmann::json::array({
+                    //     {{"name","故宫"},{"cost",100},{"time","3小时"}},
+                    //     {{"name","天安门广场"},{"cost",0},{"time","1小时"}},
+                    //     {{"name","颐和园"},{"cost",50},{"time","2小时"}}
+                    // });
+                    auto p_recommander = std::make_shared<Recommands::Recommander>(parsed, _logger);
+                    json_res = p_recommander->recommand_algorithm();
+
                 }else{
                     json_res = nlohmann::json::array({{{"name","null"},{"cost",0},{"time","null"}}});
                 }

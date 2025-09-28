@@ -17,6 +17,7 @@
 #include <boost/beast.hpp>
 
 #include "logger.hpp"
+#include "recommands.hpp"
 
 
 using net_string = boost::beast::http::request<boost::beast::http::string_body>;
@@ -67,6 +68,7 @@ class Session : public std::enable_shared_from_this<Session>{
 
         std::queue<std::shared_ptr<boost::beast::http::response<boost::beast::http::string_body>>> _response_queue;
         std::atomic<bool> _writing;
+
 };
 
 

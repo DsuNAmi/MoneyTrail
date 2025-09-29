@@ -28,6 +28,7 @@ using http_field = boost::beast::http::field;
 
 class Server;
 
+
 class Session : public std::enable_shared_from_this<Session>{
     public:
         Session(boost::asio::ip::tcp::socket socket, Server & server, Logger & logger);

@@ -11,6 +11,7 @@
 
 
 #include "logger.hpp"
+#include "threadpool.hpp"
 
 
 enum class JsonErrorType{
@@ -51,6 +52,7 @@ namespace Recommands{
         private:
 
             std::string query_ollama_qwen(const std::string & prompt);
+            json combine_ollama_qwen(const std::string & prompt);
 
             std::string combine_key(){return std::to_string(static_cast<int>(_platform_type)) + "_" + std::to_string(static_cast<int>(_model_type));}
 
@@ -85,11 +87,13 @@ namespace Recommands{
         private:
             JsonErrorType check_data();
             void parsed(const json & parsed_json);
-            std::string json_to_str(const json & res_json);
+            std::string get_prompt();
+
+
         private:
-            std::string _destination;
+            std::string _location;
             int _travel_days;
-            float _travel_budgets;
+            float _travel_budget;
 
         private:
             Logger & _logger;
